@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.colors import to_rgba
+from scenarios import get_all_scenarios, get_scenario_by_name
 
 # Set page configuration
 st.set_page_config(
@@ -27,34 +28,59 @@ Perfect for teaching Bayes' rule and other probability concepts with whole numbe
 # Sidebar for inputs
 st.sidebar.header("Configuration")
 
+# Scenario Selection
+st.sidebar.subheader("Select Scenario")
+scenario_options = ["Custom"] + [s.name for s in get_all_scenarios()]
+selected_scenario_name = st.sidebar.selectbox(
+    "Choose a pre-configured scenario or create your own",
+    options=scenario_options,
+    index=0,
+    key="scenario_selector"
+)
+
+# Load selected scenario if not Custom
+selected_scenario = None
+if selected_scenario_name != "Custom":
+    selected_scenario = get_scenario_by_name(selected_scenario_name)
+    if selected_scenario:
+        st.sidebar.info(f"**{selected_scenario.title}**\n\n{selected_scenario.description}")
+
+st.sidebar.markdown("---")
+
 # Input 1: Total whole number
+default_total = selected_scenario.total if selected_scenario else 400
 total_number = st.sidebar.number_input(
     "Total Number of Items",
     min_value=1,
     max_value=10000,
-    value=400,
+    value=default_total,
     step=1,
-    help="Total number of items to visualize (e.g., 400)"
+    help="Total number of items to visualize (e.g., 400)",
+    disabled=(selected_scenario is not None)
 )
 
 # Input 2: Grid layout
 st.sidebar.subheader("Grid Layout")
+default_rows = selected_scenario.rows if selected_scenario else 20
+default_cols = selected_scenario.cols if selected_scenario else 20
 col1, col2 = st.sidebar.columns(2)
 with col1:
     grid_rows = st.number_input(
         "Rows",
         min_value=1,
         max_value=100,
-        value=20,
-        step=1
+        value=default_rows,
+        step=1,
+        disabled=(selected_scenario is not None)
     )
 with col2:
     grid_cols = st.number_input(
         "Columns",
         min_value=1,
         max_value=100,
-        value=20,
-        step=1
+        value=default_cols,
+        step=1,
+        disabled=(selected_scenario is not None)
     )
 
 # Verify grid matches total
@@ -65,14 +91,6 @@ if grid_total != total_number:
 
 # Input 3: Proportions and labels
 st.sidebar.subheader("Categories")
-num_categories = st.sidebar.number_input(
-    "Number of Categories",
-    min_value=1,
-    max_value=10,
-    value=2,
-    step=1,
-    help="How many different categories to visualize"
-)
 
 # Default colors
 default_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', 
@@ -81,43 +99,67 @@ default_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
 categories = []
 total_proportion = 0
 
-for i in range(num_categories):
-    st.sidebar.markdown(f"**Category {i+1}**")
-    col1, col2, col3 = st.sidebar.columns([2, 1, 1])
+if selected_scenario:
+    # Use scenario categories
+    for cat in selected_scenario.categories:
+        categories.append({
+            'label': cat.label,
+            'count': cat.count,
+            'color': cat.color
+        })
+        total_proportion += cat.count
     
-    with col1:
-        label = st.text_input(
-            f"Label {i+1}",
-            value=f"Category {i+1}",
-            key=f"label_{i}",
-            label_visibility="collapsed"
-        )
+    # Display categories (read-only)
+    for i, category in enumerate(categories):
+        st.sidebar.markdown(f"**Category {i+1}**: {category['label']} ({category['count']})")
+else:
+    # Custom mode - manual input
+    num_categories = st.sidebar.number_input(
+        "Number of Categories",
+        min_value=1,
+        max_value=10,
+        value=2,
+        step=1,
+        help="How many different categories to visualize"
+    )
     
-    with col2:
-        count = st.number_input(
-            f"Count {i+1}",
-            min_value=0,
-            max_value=total_number,
-            value=min(total_number // num_categories, total_number - total_proportion),
-            step=1,
-            key=f"count_{i}",
-            label_visibility="collapsed"
-        )
-    
-    with col3:
-        color = st.color_picker(
-            f"Color {i+1}",
-            value=default_colors[i % len(default_colors)],
-            key=f"color_{i}",
-            label_visibility="collapsed"
-        )
-    
-    categories.append({
-        'label': label,
-        'count': count,
-        'color': color
-    })
-    total_proportion += count
+    for i in range(num_categories):
+        st.sidebar.markdown(f"**Category {i+1}**")
+        col1, col2, col3 = st.sidebar.columns([2, 1, 1])
+        
+        with col1:
+            label = st.text_input(
+                f"Label {i+1}",
+                value=f"Category {i+1}",
+                key=f"label_{i}",
+                label_visibility="collapsed"
+            )
+        
+        with col2:
+            count = st.number_input(
+                f"Count {i+1}",
+                min_value=0,
+                max_value=total_number,
+                value=min(total_number // num_categories, total_number - total_proportion),
+                step=1,
+                key=f"count_{i}",
+                label_visibility="collapsed"
+            )
+        
+        with col3:
+            color = st.color_picker(
+                f"Color {i+1}",
+                value=default_colors[i % len(default_colors)],
+                key=f"color_{i}",
+                label_visibility="collapsed"
+            )
+        
+        categories.append({
+            'label': label,
+            'count': count,
+            'color': color
+        })
+        total_proportion += count
 
 # Check if proportions add up
 remaining = total_number - total_proportion
@@ -239,6 +281,32 @@ if st.sidebar.button("Generate Visualization", type="primary"):
                     value=f"{category['count']}",
                     delta=f"{percentage:.1f}%"
                 )
+        
+        # Bayesian calculation for Medical Screening scenario
+        if selected_scenario_name == "Medical Screening":
+            st.markdown("---")
+            st.markdown("### 🎯 Bayesian Analysis")
+            
+            # Find the relevant categories
+            true_positives = categories[0]['count']  # Has Disease & Tests Positive
+            false_positives = categories[1]['count']  # No Disease & Tests Positive
+            all_positives = true_positives + false_positives
+            
+            if all_positives > 0:
+                probability_disease_given_positive = (true_positives / all_positives) * 100
+                st.success(f"""
+                **Key Insight: Probability of Having Disease Given Positive Test**
+                
+                P(Disease | Positive Test) = True Positives / All Positives
+                
+                = {true_positives} / ({true_positives} + {false_positives})
+                
+                = {true_positives} / {all_positives}
+                
+                = **{probability_disease_given_positive:.2f}%**
+                
+                Even though the test is 90% accurate, if you test positive, there's only a {probability_disease_given_positive:.1f}% chance you actually have the disease! This is because false positives ({false_positives}) greatly outnumber true positives ({true_positives}) when the disease is rare.
+                """)
         
         # Additional statistics
         st.markdown("---")

@@ -2,12 +2,20 @@
 
 A flexible software tool to help non-mathematicians understand probability. The tool generates customizable graphical displays (grids, colors, shapes) that illustrate concepts like Bayes' rule using whole numbers (e.g., "80 out of 400") instead of abstract percentages.
 
+## Project Structure
+
+- `app.py` - Main Streamlit application with UI and visualization logic
+- `scenarios.py` - Pre-configured probability scenarios and data structures
+- `requirements.txt` - Python dependencies
+
 ## Features
 
+- 📚 **Interactive Scenario Library**: Choose from pre-configured probability scenarios or create your own
 - 🎨 **Interactive Visualization**: Create colorful grid-based visualizations of probability concepts
 - 🔢 **Whole Numbers**: Use concrete numbers instead of abstract percentages
 - 📊 **Flexible Configuration**: Customize grid size, categories, colors, and shapes
 - 📈 **Statistics Display**: View counts, percentages, and odds for each category
+- 🎯 **Bayesian Analysis**: Automatic calculation of conditional probabilities for medical screening scenarios
 - 🎲 **Teaching Tool**: Perfect for classroom demonstrations of Bayes' rule and probability
 
 ## Installation
@@ -34,19 +42,36 @@ The app will open in your default web browser at `http://localhost:8501`
 
 ## How to Use
 
-1. **Set Total Number**: Enter the total number of items to visualize (e.g., 400)
-2. **Configure Grid**: Set the number of rows and columns (e.g., 20×20 = 400)
-3. **Add Categories**: 
+### Using Pre-Configured Scenarios
+
+1. **Select a Scenario**: Choose from the dropdown menu:
+   - **Medical Screening**: Demonstrates Bayes' rule with a medical test example
+   - **Simple Probability**: Basic probability with tangible numbers
+   - **Coin Flip**: Shows experimental vs. theoretical probability
+2. **Review Configuration**: The scenario automatically populates all settings (total, grid, categories)
+3. **Customize Display**:
+   - Choose cell shape (Square or Circle)
+   - Toggle grid lines, legend, and statistics
+   - Option to shuffle for random distribution
+4. **Generate**: Click "Generate Visualization" to create your probability grid
+5. **Analyze**: View statistics and Bayesian analysis (for Medical Screening scenario)
+
+### Using Custom Mode
+
+1. **Select "Custom"** from the scenario dropdown
+2. **Set Total Number**: Enter the total number of items to visualize (e.g., 400)
+3. **Configure Grid**: Set the number of rows and columns (e.g., 20×20 = 400)
+4. **Add Categories**: 
    - Specify the number of categories
    - For each category, enter:
      - Label (name)
      - Count (how many items)
      - Color (visual representation)
-4. **Customize Display**:
+5. **Customize Display**:
    - Choose cell shape (Square or Circle)
    - Toggle grid lines, legend, and statistics
    - Option to shuffle for random distribution
-5. **Generate**: Click "Generate Visualization" to create your probability grid
+6. **Generate**: Click "Generate Visualization" to create your probability grid
 
 ## Example Use Cases
 
