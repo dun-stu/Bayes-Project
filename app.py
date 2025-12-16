@@ -287,9 +287,15 @@ if st.sidebar.button("Generate Visualization", type="primary"):
             st.markdown("---")
             st.markdown("### 🎯 Bayesian Analysis")
             
-            # Find the relevant categories
-            true_positives = categories[0]['count']  # Has Disease & Tests Positive
-            false_positives = categories[1]['count']  # No Disease & Tests Positive
+            # Find the relevant categories by label
+            true_positives = 0
+            false_positives = 0
+            for category in categories:
+                if "Has Disease & Tests Positive" in category['label']:
+                    true_positives = category['count']
+                elif "No Disease & Tests Positive" in category['label']:
+                    false_positives = category['count']
+            
             all_positives = true_positives + false_positives
             
             if all_positives > 0:

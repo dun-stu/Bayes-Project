@@ -121,12 +121,22 @@ def get_all_scenarios() -> List[Scenario]:
 
 
 def get_scenario_by_name(name: str) -> Scenario:
-    """Get a specific scenario by name."""
+    """Get a specific scenario by name.
+    
+    Args:
+        name: The name of the scenario to retrieve.
+        
+    Returns:
+        The requested Scenario object.
+        
+    Raises:
+        ValueError: If no scenario with the given name is found.
+    """
     scenarios = get_all_scenarios()
     for scenario in scenarios:
         if scenario.name == name:
             return scenario
-    return None
+    raise ValueError(f"No scenario found with name '{name}'. Available scenarios: {get_scenario_names()}")
 
 
 def get_scenario_names() -> List[str]:
