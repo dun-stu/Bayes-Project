@@ -130,9 +130,10 @@ st.markdown("### Posterior answer")
 if counts.total_test_positive == 0:
     st.metric("Posterior (PPV)", "Undefined", "No positive test results")
 elif framing == "probability":
+    condition_label = domain["condition"].capitalize()
     st.metric(
         "Posterior (PPV)",
-        f"P(Disease | Test⁺) = {counts.true_positive}/{counts.total_test_positive} ≈ {counts.posterior_ppv:.3f}",
+        f"P({condition_label} | Test⁺) = {counts.true_positive}/{counts.total_test_positive} ≈ {counts.posterior_ppv:.3f}",
         f"{counts.posterior_ppv * 100:.1f}%",
     )
 else:

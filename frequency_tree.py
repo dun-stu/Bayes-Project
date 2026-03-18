@@ -5,13 +5,16 @@ import plotly.graph_objects as go
 from calculations import BayesianParameters, DerivedCounts
 from icon_array import COLORS
 
+POSTERIOR_BRACKET_Y = 0.14
+POSTERIOR_BRACKET_TICK_Y = 0.11
+
 
 def _as_pct(value: float, digits: int = 1) -> str:
     return f"{value * 100:.{digits}f}%"
 
 
 def _as_prob(value: float) -> str:
-    return f"{value:.3f}".rstrip("0").rstrip(".") if value else "0"
+    return f"{value:.3g}" if value else "0"
 
 
 def _node_value(count: int, total: int, use_probability: bool) -> str:
@@ -173,9 +176,30 @@ def create_frequency_tree(
         width=0.16,
     )
 
-    fig.add_shape(type="line", x0=positions["tp"][0], y0=0.14, x1=positions["fp"][0], y1=0.14, line={"color": "#111827", "width": 3})
-    fig.add_shape(type="line", x0=positions["tp"][0], y0=0.14, x1=positions["tp"][0], y1=0.11, line={"color": "#111827", "width": 3})
-    fig.add_shape(type="line", x0=positions["fp"][0], y0=0.14, x1=positions["fp"][0], y1=0.11, line={"color": "#111827", "width": 3})
+    fig.add_shape(
+        type="line",
+        x0=positions["tp"][0],
+        y0=POSTERIOR_BRACKET_Y,
+        x1=positions["fp"][0],
+        y1=POSTERIOR_BRACKET_Y,
+        line={"color": "#111827", "width": 3},
+    )
+    fig.add_shape(
+        type="line",
+        x0=positions["tp"][0],
+        y0=POSTERIOR_BRACKET_Y,
+        x1=positions["tp"][0],
+        y1=POSTERIOR_BRACKET_TICK_Y,
+        line={"color": "#111827", "width": 3},
+    )
+    fig.add_shape(
+        type="line",
+        x0=positions["fp"][0],
+        y0=POSTERIOR_BRACKET_Y,
+        x1=positions["fp"][0],
+        y1=POSTERIOR_BRACKET_TICK_Y,
+        line={"color": "#111827", "width": 3},
+    )
 
     if counts.total_test_positive == 0:
         posterior_text = "PPV is undefined (no positive test results)"

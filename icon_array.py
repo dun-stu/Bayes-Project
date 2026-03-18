@@ -15,6 +15,15 @@ COLORS = {
     "false_positive": "#93C5FD",
 }
 
+MIN_MARKER_SIZE = 8
+MAX_MARKER_SIZE = 26
+MARKER_SIZE_BASE = 520
+LOW_N_THRESHOLD = 200
+MID_N_THRESHOLD = 500
+LOW_ANNOTATION_FONT = 11
+MID_ANNOTATION_FONT = 13
+HIGH_ANNOTATION_FONT = 15
+
 
 def compute_grid(N: int) -> tuple[int, int]:
     """Return (rows, cols) for a near-square grid containing N cells."""
@@ -99,6 +108,18 @@ def _region_defs(counts: DerivedCounts, domain: dict, grouping: str) -> List[Dic
     ]
 
 
+def _annotation_font_size(N: int) -> int:
+    if N <= LOW_N_THRESHOLD:
+        return LOW_ANNOTATION_FONT
+    if N < MID_N_THRESHOLD:
+        return MID_ANNOTATION_FONT
+    return HIGH_ANNOTATION_FONT
+
+
+def _compute_marker_size(rows: int, cols: int) -> int:
+    return max(MIN_MARKER_SIZE, min(MAX_MARKER_SIZE, int(MARKER_SIZE_BASE / max(rows, cols))))
+
+
 def create_icon_array(
     counts: DerivedCounts,
     domain: dict,
@@ -143,7 +164,7 @@ def create_icon_array(
         xs.append(col)
         ys.append(rows - 1 - row)
 
-    marker_size = max(8, min(26, int(520 / max(rows, cols))))
+    marker_size = _compute_marker_size(rows, cols)
 
     fig = go.Figure()
     fig.add_trace(
@@ -163,7 +184,7 @@ def create_icon_array(
         )
     )
 
-    annotation_font = 11 if counts.N <= 200 else 13 if counts.N < 500 else 15
+    annotation_font = _annotation_font_size(counts.N)
     for region in regions:
         region_idx = region_indices.get(region["key"], [])
         if not region_idx:

@@ -1,5 +1,13 @@
 from dataclasses import dataclass
 
+MIN_N = 100
+MAX_N = 1000
+MIN_RATE = 0.001
+MAX_BASE_RATE = 0.50
+MIN_SENSITIVITY = 0.50
+MAX_SENSITIVITY = 0.999
+MAX_FPR = 0.50
+
 
 @dataclass
 class BayesianParameters:
@@ -29,10 +37,10 @@ def _clamp(value: float, minimum: float, maximum: float) -> float:
 
 def compute(params: BayesianParameters) -> DerivedCounts:
     """Compute natural-frequency counts and posterior from Bayes parameters."""
-    N = int(_clamp(params.N, 100, 1000))
-    base_rate = _clamp(params.base_rate, 0.001, 0.50)
-    sensitivity = _clamp(params.sensitivity, 0.50, 0.999)
-    fpr = _clamp(params.fpr, 0.001, 0.50)
+    N = int(_clamp(params.N, MIN_N, MAX_N))
+    base_rate = _clamp(params.base_rate, MIN_RATE, MAX_BASE_RATE)
+    sensitivity = _clamp(params.sensitivity, MIN_SENSITIVITY, MAX_SENSITIVITY)
+    fpr = _clamp(params.fpr, MIN_RATE, MAX_FPR)
 
     n_disease = round(N * base_rate)
     n_healthy = N - n_disease
