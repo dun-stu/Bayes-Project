@@ -58,6 +58,9 @@ class BayesianToolTests(unittest.TestCase):
         self.assertEqual(icon_dict["data"][0]["type"], "scatter")
         self.assertEqual(icon_dict["data"][0]["marker"]["symbol"], "square")
         self.assertEqual(len(icon_dict["data"][0]["x"]), rows * cols)
+        self.assertEqual(len(icon_dict["layout"].get("annotations", [])), 0)
+        self.assertEqual(icon_dict["layout"]["legend"]["orientation"], "v")
+        self.assertGreater(icon_dict["layout"]["legend"]["x"], 1.0)
         self.assertTrue(
             any(
                 isinstance(trace.get("name"), str) and "True Positive" in trace["name"]
