@@ -157,26 +157,29 @@ else:
     )
 
 with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True):
-    explanation_tab, bayes_math_tab = st.tabs(["Explanation", "Bayes rule mapping/math"])
+    explanation_col, bayes_panel_col = st.columns([1, 1], gap="large")
 
-    with explanation_tab:
+    with explanation_col:
         st.markdown(f"**Text form**  \n{bayes_explanation['formula']}")
         st.markdown(f"**Current-value text substitution**  \n{bayes_explanation['substitution']}")
         st.markdown("**Quick visual-reading summary**")
         for line in bayes_explanation["mapping"]:
             st.markdown(f"- {line}")
 
-    with bayes_math_tab:
-        st.markdown("**Original Bayes' rule**")
-        st.latex(bayes_explanation["latex_original"])
-        st.markdown("**Expanded with total probability**")
-        st.latex(bayes_explanation["latex_expanded"])
-        st.markdown("**Substitute current values**")
-        st.latex(bayes_explanation["latex_substitution"])
-        if framing == "frequency":
-            st.markdown("**Equivalent frequency form**")
-            st.latex(bayes_explanation["latex_frequency_form"])
-        st.markdown("**How each equation part maps to the visuals**")
-        for part in bayes_explanation["term_mapping"]:
-            st.latex(part["term"])
-            st.markdown(f"- {part['meaning']} {part['visual']}")
+    with bayes_panel_col:
+        with st.expander("Open Bayes rule mapping/math tab", expanded=False):
+            (bayes_math_tab,) = st.tabs(["Bayes rule mapping/math"])
+            with bayes_math_tab:
+                st.markdown("**Original Bayes' rule**")
+                st.latex(bayes_explanation["latex_original"])
+                st.markdown("**Expanded with total probability**")
+                st.latex(bayes_explanation["latex_expanded"])
+                st.markdown("**Substitute current values**")
+                st.latex(bayes_explanation["latex_substitution"])
+                if framing == "frequency":
+                    st.markdown("**Equivalent frequency form**")
+                    st.latex(bayes_explanation["latex_frequency_form"])
+                st.markdown("**How each equation part maps to the visuals**")
+                for part in bayes_explanation["term_mapping"]:
+                    st.latex(part["term"])
+                    st.markdown(f"- {part['meaning']} {part['visual']}")
