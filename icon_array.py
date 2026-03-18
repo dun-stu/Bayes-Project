@@ -186,8 +186,9 @@ def create_icon_array(
             "visible": False,
             "range": [-0.6, cols - 0.4],
             "scaleanchor": "y",
+            "fixedrange": True,
         },
-        yaxis={"visible": False, "range": [-0.6, rows - 0.4]},
+        yaxis={"visible": False, "range": [-0.6, rows - 0.4], "fixedrange": True},
         height=max(360, min(760, int(rows * marker_size * 1.35))),
     )
 

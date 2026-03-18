@@ -167,19 +167,18 @@ with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True)
             st.markdown(f"- {line}")
 
     with bayes_panel_col:
-        with st.expander("Open Bayes rule mapping/math tab", expanded=False):
-            (bayes_math_tab,) = st.tabs(["Bayes rule mapping/math"])
-            with bayes_math_tab:
-                st.markdown("**Original Bayes' rule**")
-                st.latex(bayes_explanation["latex_original"])
-                st.markdown("**Expanded with total probability**")
-                st.latex(bayes_explanation["latex_expanded"])
-                st.markdown("**Substitute current values**")
-                st.latex(bayes_explanation["latex_substitution"])
-                if framing == "frequency":
-                    st.markdown("**Equivalent frequency form**")
-                    st.latex(bayes_explanation["latex_frequency_form"])
-                st.markdown("**How each equation part maps to the visuals**")
-                for part in bayes_explanation["term_mapping"]:
-                    st.latex(part["term"])
-                    st.markdown(f"- {part['meaning']} {part['visual']}")
+        (bayes_math_tab,) = st.tabs(["Bayes rule mapping/math"])
+        with bayes_math_tab:
+            st.markdown("**Original Bayes' rule**")
+            st.latex(bayes_explanation["latex_original"])
+            st.markdown("**Expanded with total probability**")
+            st.latex(bayes_explanation["latex_expanded"])
+            st.markdown("**Substitute current values**")
+            st.latex(bayes_explanation["latex_substitution"])
+            if framing == "frequency":
+                st.markdown("**Equivalent frequency form**")
+                st.latex(bayes_explanation["latex_frequency_form"])
+            st.markdown("**How each equation part maps to the visuals**")
+            for part in bayes_explanation["term_mapping"]:
+                st.latex(part["term"])
+                st.markdown(f"- {part['meaning']} {part['visual']}")

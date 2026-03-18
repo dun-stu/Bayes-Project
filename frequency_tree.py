@@ -228,8 +228,8 @@ def create_frequency_tree(
     )
 
     fig.update_layout(
-        xaxis={"visible": False, "range": [0.02, 0.98]},
-        yaxis={"visible": False, "range": [0.0, 1.08]},
+        xaxis={"visible": False, "range": [0.02, 0.98], "fixedrange": True},
+        yaxis={"visible": False, "range": [0.0, 1.08], "fixedrange": True},
         margin={"l": 10, "r": 10, "t": 10, "b": 10},
         plot_bgcolor="white",
         paper_bgcolor="white",
