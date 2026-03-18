@@ -4,7 +4,7 @@ from calculations import BayesianParameters, compute
 from frequency_tree import create_frequency_tree
 from icon_array import create_icon_array
 from scenarios import SCENARIOS
-from text_layer import generate_problem_text
+from text_layer import generate_bayes_explanation, generate_problem_text
 
 st.set_page_config(page_title="Bayesian Reasoning Tool", page_icon="🎲", layout="wide")
 
@@ -17,6 +17,16 @@ DEFAULT_DOMAIN = {
     "test_negative": "test negative",
 }
 DEFAULTS = {"N": 200, "base_rate": 0.05, "sensitivity": 0.90, "fpr": 0.05}
+BASE_RATE_OPTIONS_PCT = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
+SENSITIVITY_OPTIONS_PCT = [60.0, 70.0, 80.0, 85.0, 90.0, 95.0, 97.0, 98.0, 99.0, 99.5, 99.9]
+FPR_OPTIONS_PCT = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
+
+
+def _ensure_current_in_options(options: list[float], current: float) -> list[float]:
+    rounded = round(float(current), 1)
+    if rounded in options:
+        return options
+    return sorted(set([*options, rounded]))
 
 if "icon_grouping" not in st.session_state:
     st.session_state.icon_grouping = False
@@ -57,35 +67,37 @@ else:
     st.session_state.setdefault("fpr_pct", defaults["fpr"] * 100)
 
 st.sidebar.header("Parameters")
+if st.session_state.sensitivity_pct < 60.0:
+    st.session_state.sensitivity_pct = 60.0
 N = st.sidebar.select_slider(
     "Population size (N)",
     options=[100, 200, 500, 1000],
     key="N",
 )
-base_rate_pct = st.sidebar.slider(
+base_rate_pct = st.sidebar.select_slider(
     "Base rate (prevalence)",
-    0.1,
-    50.0,
-    step=0.1,
-    format="%.1f%%",
+    options=_ensure_current_in_options(BASE_RATE_OPTIONS_PCT, st.session_state.base_rate_pct),
+    format_func=lambda value: f"{value:.1f}%",
     key="base_rate_pct",
 )
-sensitivity_pct = st.sidebar.slider(
+sensitivity_pct = st.sidebar.select_slider(
     "Sensitivity",
-    50.0,
-    99.9,
-    step=0.1,
-    format="%.1f%%",
+    options=_ensure_current_in_options(SENSITIVITY_OPTIONS_PCT, st.session_state.sensitivity_pct),
+    format_func=lambda value: f"{value:.1f}%",
     key="sensitivity_pct",
 )
-fpr_pct = st.sidebar.slider(
+fpr_options = [value for value in FPR_OPTIONS_PCT if value < sensitivity_pct]
+if not fpr_options:
+    fpr_options = [0.1]
+if st.session_state.fpr_pct not in fpr_options:
+    st.session_state.fpr_pct = min(fpr_options, key=lambda value: abs(value - st.session_state.fpr_pct))
+fpr_pct = st.sidebar.select_slider(
     "False positive rate",
-    0.1,
-    50.0,
-    step=0.1,
-    format="%.1f%%",
+    options=fpr_options,
+    format_func=lambda value: f"{value:.1f}%",
     key="fpr_pct",
 )
+st.sidebar.caption("Constraint: false positive rate is kept below sensitivity.")
 
 st.sidebar.header("Display")
 framing = "probability" if st.sidebar.toggle("Show as probabilities", value=False) else "frequency"
@@ -98,6 +110,7 @@ params = BayesianParameters(
 )
 counts = compute(params)
 problem = generate_problem_text(counts, params, domain, framing)
+bayes_explanation = generate_bayes_explanation(counts, params, domain, framing)
 
 st.title("🎲 Bayesian Reasoning Tool")
 st.markdown(problem["description"])
@@ -142,3 +155,10 @@ else:
         f"{counts.true_positive} out of {counts.total_test_positive}",
         f"{counts.posterior_ppv * 100:.1f}% actually {domain['condition']}",
     )
+
+with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True):
+    st.markdown(f"**Formula**  \n{bayes_explanation['formula']}")
+    st.markdown(f"**Substitute current values**  \n{bayes_explanation['substitution']}")
+    st.markdown("**How this maps to the visuals**")
+    for line in bayes_explanation["mapping"]:
+        st.markdown(f"- {line}")

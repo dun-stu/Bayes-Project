@@ -4,7 +4,7 @@ from calculations import BayesianParameters, compute
 from frequency_tree import create_frequency_tree
 from icon_array import compute_grid, create_icon_array
 from scenarios import SCENARIOS
-from text_layer import generate_problem_text
+from text_layer import generate_bayes_explanation, generate_problem_text
 
 
 class BayesianToolTests(unittest.TestCase):
@@ -63,6 +63,22 @@ class BayesianToolTests(unittest.TestCase):
         self.assertTrue(
             any("PPV:" in annotation["text"] for annotation in tree_dict["layout"]["annotations"])
         )
+
+    def test_bayes_explanation_generation(self):
+        scenario = self._get_mammography_scenario()
+        self.assertIsNotNone(scenario)
+        params = BayesianParameters(**scenario["defaults"])
+        counts = compute(params)
+
+        freq = generate_bayes_explanation(counts, params, scenario["domain"], "frequency")
+        self.assertIn("True Positives", freq["formula"])
+        self.assertIn("9 / (9 + 89)", freq["substitution"])
+        self.assertEqual(len(freq["mapping"]), 4)
+
+        prob = generate_bayes_explanation(counts, params, scenario["domain"], "probability")
+        self.assertIn("P(Condition | Test⁺)", prob["formula"])
+        self.assertIn("= 0.092", prob["substitution"])
+        self.assertTrue(any("Frequency Tree" in item for item in prob["mapping"]))
 
 
 if __name__ == "__main__":
