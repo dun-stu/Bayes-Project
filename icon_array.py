@@ -30,6 +30,7 @@ EXTERNAL_LABEL_BASE_X_PIXELS = 120
 EXTERNAL_LABEL_BASE_Y_PIXELS = -36
 EXTERNAL_LABEL_Y_SPACING_PIXELS = 30
 EXTERNAL_LABEL_X_RANGE_EXPANSION = 4.2
+BOTTOM_MARGIN_WITH_LEGEND = 64
 
 
 def compute_grid(N: int) -> tuple[int, int]:
@@ -206,10 +207,10 @@ def create_icon_array(
         centroid_y = sum((rows - 1 - (idx // cols)) for idx in region_idx) / len(region_idx)
         value_text = _format_region_value(region["count"], counts.N, framing)
         label_text = (
-            f"<b>{_format_domain_label(region['domain_label'])}</b><br>"
+            f"<b>{region['struct_label']}</b><br>"
             f"{value_text}<br>"
             f"<span style='color:#6B7280;font-size:{max(annotation_font - 2, 9)}px'>"
-            f"({region['struct_label']})"
+            f"{_format_domain_label(region['domain_label'])}"
             "</span>"
         )
         use_external_label = (region["count"] / counts.N) < EXTERNAL_LABEL_RATIO_THRESHOLD
@@ -245,9 +246,17 @@ def create_icon_array(
             )
 
     fig.update_layout(
-        margin={"l": 10, "r": 10, "t": 10, "b": 10},
+        margin={"l": 10, "r": 10, "t": 10, "b": BOTTOM_MARGIN_WITH_LEGEND},
         plot_bgcolor="white",
         paper_bgcolor="white",
+        legend={
+            "orientation": "h",
+            "yanchor": "top",
+            "y": -0.02,
+            "xanchor": "left",
+            "x": 0.0,
+            "font": {"size": 11},
+        },
         xaxis={
             "visible": False,
             "range": [-0.6, cols + (EXTERNAL_LABEL_X_RANGE_EXPANSION if has_external_labels else -0.4)],
@@ -256,5 +265,20 @@ def create_icon_array(
         yaxis={"visible": False, "range": [-0.6, rows - 0.4]},
         height=max(360, min(760, int(rows * marker_size * 1.35))),
     )
+
+    legend_traces = []
+    for region in regions:
+        legend_traces.append(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                marker={"symbol": "square", "size": 11, "color": region["color"]},
+                name=f"{region['struct_label']}: {region['domain_label']}",
+                hoverinfo="skip",
+                showlegend=True,
+            )
+        )
+    fig.add_traces(legend_traces)
 
     return fig

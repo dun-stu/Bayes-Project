@@ -58,6 +58,12 @@ class BayesianToolTests(unittest.TestCase):
         self.assertEqual(icon_dict["data"][0]["type"], "scatter")
         self.assertEqual(icon_dict["data"][0]["marker"]["symbol"], "square")
         self.assertEqual(len(icon_dict["data"][0]["x"]), rows * cols)
+        self.assertTrue(
+            any(
+                isinstance(trace.get("name"), str) and "True Positive" in trace["name"]
+                for trace in icon_dict["data"][1:]
+            )
+        )
 
         self.assertGreaterEqual(len(tree_dict["layout"]["shapes"]), 10)
         self.assertTrue(
@@ -79,6 +85,10 @@ class BayesianToolTests(unittest.TestCase):
         self.assertIn("P(Condition | Test⁺)", prob["formula"])
         self.assertIn("= 0.092", prob["substitution"])
         self.assertTrue(any("Frequency Tree" in item for item in prob["mapping"]))
+        self.assertIn(r"P(D \mid T^+)", prob["latex_original"])
+        self.assertIn(r"P(T^+ \mid \neg D)\,P(\neg D)", prob["latex_expanded"])
+        self.assertIn(r"= 0.092", prob["latex_substitution"])
+        self.assertEqual(len(prob["term_mapping"]), 3)
 
 
 if __name__ == "__main__":

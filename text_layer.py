@@ -1,5 +1,11 @@
 from calculations import BayesianParameters, DerivedCounts
 
+LATEX_BAYES_ORIGINAL = r"P(D \mid T^+) = \frac{P(T^+ \mid D)\,P(D)}{P(T^+)}"
+LATEX_BAYES_EXPANDED = (
+    r"P(D \mid T^+) = "
+    r"\frac{P(T^+ \mid D)\,P(D)}{P(T^+ \mid D)\,P(D) + P(T^+ \mid \neg D)\,P(\neg D)}"
+)
+
 
 def _pct(value: float, digits: int = 1) -> str:
     return f"{value * 100:.{digits}f}%"
@@ -66,6 +72,27 @@ def generate_bayes_explanation(
             f"= {counts.true_positive}/{counts.total_test_positive} = {counts.posterior_ppv:.3f}"
         )
 
+    tp_path_prob = f"{params.sensitivity:.3f}\\times{params.base_rate:.3f}"
+    fp_path_prob = f"{params.fpr:.3f}\\times{1 - params.base_rate:.3f}"
+    latex_substitution = (
+        r"P(D \mid T^+) = "
+        r"\frac{"
+        f"{tp_path_prob}"
+        r"}{"
+        f"{tp_path_prob}"
+        r" + "
+        f"{fp_path_prob}"
+        r"}"
+        f" = {counts.posterior_ppv:.3f}"
+    )
+    latex_frequency_form = (
+        r"P(D \mid T^+) = "
+        r"\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}"
+        r" = "
+        rf"\frac{{{counts.true_positive}}}{{{counts.true_positive}+{counts.false_positive}}}"
+        f" = {counts.posterior_ppv:.3f}"
+    )
+
     mapping = [
         (
             f"Icon Array: numerator is the **True Positive** region "
@@ -86,4 +113,36 @@ def generate_bayes_explanation(
             f"**{condition_neg_label} → {test_pos_label}**."
         ),
     ]
-    return {"formula": formula, "substitution": substitution, "mapping": mapping}
+    term_mapping = [
+        {
+            "term": r"P(T^+ \mid D)\,P(D)",
+            "meaning": "True-positive pathway contribution.",
+            "visual": (
+                f"Tree branch {condition_label} → {test_pos_label}; "
+                f"icon-array True Positive region ({counts.true_positive})."
+            ),
+        },
+        {
+            "term": r"P(T^+ \mid \neg D)\,P(\neg D)",
+            "meaning": "False-positive pathway contribution.",
+            "visual": (
+                f"Tree branch {condition_neg_label} → {test_pos_label}; "
+                f"icon-array False Positive region ({counts.false_positive})."
+            ),
+        },
+        {
+            "term": r"P(T^+)",
+            "meaning": "All positive tests in the denominator.",
+            "visual": f"True Positive + False Positive = {counts.total_test_positive}.",
+        },
+    ]
+    return {
+        "formula": formula,
+        "substitution": substitution,
+        "mapping": mapping,
+        "latex_original": LATEX_BAYES_ORIGINAL,
+        "latex_expanded": LATEX_BAYES_EXPANDED,
+        "latex_substitution": latex_substitution,
+        "latex_frequency_form": latex_frequency_form,
+        "term_mapping": term_mapping,
+    }

@@ -157,8 +157,21 @@ else:
     )
 
 with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True):
-    st.markdown(f"**Formula**  \n{bayes_explanation['formula']}")
-    st.markdown(f"**Substitute current values**  \n{bayes_explanation['substitution']}")
-    st.markdown("**How this maps to the visuals**")
+    st.markdown("**Original Bayes' rule**")
+    st.latex(bayes_explanation["latex_original"])
+    st.markdown("**Expanded with total probability**")
+    st.latex(bayes_explanation["latex_expanded"])
+    st.markdown("**Substitute current values**")
+    st.latex(bayes_explanation["latex_substitution"])
+    if framing == "frequency":
+        st.markdown("**Equivalent frequency form**")
+        st.latex(bayes_explanation["latex_frequency_form"])
+    st.markdown(f"**Text form**  \n{bayes_explanation['formula']}")
+    st.markdown(f"**Current-value text substitution**  \n{bayes_explanation['substitution']}")
+    st.markdown("**How each equation part maps to the visuals**")
+    for part in bayes_explanation["term_mapping"]:
+        st.latex(part["term"])
+        st.markdown(f"- {part['meaning']} {part['visual']}")
+    st.markdown("**Quick visual-reading summary**")
     for line in bayes_explanation["mapping"]:
         st.markdown(f"- {line}")
