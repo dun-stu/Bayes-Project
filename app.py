@@ -140,27 +140,33 @@ with tree_tab:
     st.plotly_chart(tree_fig, use_container_width=True)
 
 st.markdown("### Posterior answer")
-metric_col, bayes_math_col = st.columns([1, 1], gap="large")
+if counts.total_test_positive == 0:
+    st.metric("Posterior (PPV)", "Undefined", "No positive test results")
+elif framing == "probability":
+    condition_label = domain["condition"].capitalize()
+    st.metric(
+        "Posterior (PPV)",
+        f"P({condition_label} | Test⁺) = {counts.true_positive}/{counts.total_test_positive} ≈ {counts.posterior_ppv:.3f}",
+        f"{counts.posterior_ppv * 100:.1f}%",
+    )
+else:
+    st.metric(
+        "Posterior (PPV)",
+        f"{counts.true_positive} out of {counts.total_test_positive}",
+        f"{counts.posterior_ppv * 100:.1f}% actually {domain['condition']}",
+    )
 
-with metric_col:
-    if counts.total_test_positive == 0:
-        st.metric("Posterior (PPV)", "Undefined", "No positive test results")
-    elif framing == "probability":
-        condition_label = domain["condition"].capitalize()
-        st.metric(
-            "Posterior (PPV)",
-            f"P({condition_label} | Test⁺) = {counts.true_positive}/{counts.total_test_positive} ≈ {counts.posterior_ppv:.3f}",
-            f"{counts.posterior_ppv * 100:.1f}%",
-        )
-    else:
-        st.metric(
-            "Posterior (PPV)",
-            f"{counts.true_positive} out of {counts.total_test_positive}",
-            f"{counts.posterior_ppv * 100:.1f}% actually {domain['condition']}",
-        )
+with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True):
+    explanation_tab, bayes_math_tab = st.tabs(["Explanation", "Bayes rule mapping/math"])
 
-with bayes_math_col:
-    with st.expander("Bayes' rule math + visual mapping", expanded=True):
+    with explanation_tab:
+        st.markdown(f"**Text form**  \n{bayes_explanation['formula']}")
+        st.markdown(f"**Current-value text substitution**  \n{bayes_explanation['substitution']}")
+        st.markdown("**Quick visual-reading summary**")
+        for line in bayes_explanation["mapping"]:
+            st.markdown(f"- {line}")
+
+    with bayes_math_tab:
         st.markdown("**Original Bayes' rule**")
         st.latex(bayes_explanation["latex_original"])
         st.markdown("**Expanded with total probability**")
@@ -170,12 +176,7 @@ with bayes_math_col:
         if framing == "frequency":
             st.markdown("**Equivalent frequency form**")
             st.latex(bayes_explanation["latex_frequency_form"])
-        st.markdown(f"**Text form**  \n{bayes_explanation['formula']}")
-        st.markdown(f"**Current-value text substitution**  \n{bayes_explanation['substitution']}")
         st.markdown("**How each equation part maps to the visuals**")
         for part in bayes_explanation["term_mapping"]:
             st.latex(part["term"])
             st.markdown(f"- {part['meaning']} {part['visual']}")
-        st.markdown("**Quick visual-reading summary**")
-        for line in bayes_explanation["mapping"]:
-            st.markdown(f"- {line}")
