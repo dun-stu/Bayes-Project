@@ -36,6 +36,7 @@ if "selected_scenario" not in st.session_state:
     st.session_state.selected_scenario = SCENARIOS[0]["name"]
 
 # Sidebar
+st.sidebar.title("Settings")
 st.sidebar.header("Scenario")
 scenario_names = [scenario["name"] for scenario in SCENARIOS] + ["Custom"]
 selected = st.sidebar.selectbox(
@@ -44,6 +45,7 @@ selected = st.sidebar.selectbox(
     index=scenario_names.index(st.session_state.selected_scenario)
     if st.session_state.selected_scenario in scenario_names
     else 0,
+    help="Pick a pre-built real-world example or configure your own.",
 )
 
 if selected != "Custom":
@@ -66,7 +68,14 @@ else:
     st.session_state.setdefault("sensitivity_pct", defaults["sensitivity"] * 100)
     st.session_state.setdefault("fpr_pct", defaults["fpr"] * 100)
 
+st.sidebar.divider()
 st.sidebar.header("Parameters")
+if st.sidebar.button("↩ Reset to scenario defaults", use_container_width=True):
+    st.session_state.N = defaults["N"]
+    st.session_state.base_rate_pct = defaults["base_rate"] * 100
+    st.session_state.sensitivity_pct = defaults["sensitivity"] * 100
+    st.session_state.fpr_pct = defaults["fpr"] * 100
+    st.rerun()
 if st.session_state.sensitivity_pct < 60.0:
     st.session_state.sensitivity_pct = 60.0
 N = st.sidebar.select_slider(
@@ -99,8 +108,9 @@ fpr_pct = st.sidebar.select_slider(
 )
 st.sidebar.caption("Constraint: false positive rate is kept below sensitivity.")
 
+st.sidebar.divider()
 st.sidebar.header("Display")
-framing = "probability" if st.sidebar.toggle("Show as probabilities", value=False) else "frequency"
+framing = "probability" if st.sidebar.toggle("Show as probabilities", value=False, help="Switch between natural-frequency counts and probability notation.") else "frequency"
 
 params = BayesianParameters(
     N=N,
@@ -113,8 +123,10 @@ problem = generate_problem_text(counts, params, domain, framing)
 bayes_explanation = generate_bayes_explanation(counts, params, domain, framing)
 
 st.title("🎲 Bayesian Reasoning Tool")
-st.markdown(problem["description"])
-st.info(problem["question"])
+
+with st.container(border=True):
+    st.markdown(problem["description"])
+    st.info(problem["question"], icon="❓")
 
 icon_tab, tree_tab = st.tabs(["Icon Array", "Frequency Tree"])
 
@@ -139,46 +151,51 @@ with tree_tab:
     )
     st.plotly_chart(tree_fig, use_container_width=True)
 
-st.markdown("### Posterior answer")
+st.divider()
+st.markdown("### Posterior probability (PPV)")
 if counts.total_test_positive == 0:
-    st.metric("Posterior (PPV)", "Undefined", "No positive test results")
+    st.metric("P(Condition | Test⁺)", "Undefined", "No positive test results")
 elif framing == "probability":
     condition_label = domain["condition"].capitalize()
-    st.metric(
-        "Posterior (PPV)",
-        f"P({condition_label} | Test⁺) = {counts.true_positive}/{counts.total_test_positive} ≈ {counts.posterior_ppv:.3f}",
-        f"{counts.posterior_ppv * 100:.1f}%",
-    )
+    col_m, _ = st.columns([1, 3])
+    with col_m:
+        st.metric(
+            f"P({condition_label} | Test⁺)",
+            f"{counts.posterior_ppv * 100:.1f}%",
+            f"{counts.true_positive} / {counts.total_test_positive} test-positives",
+        )
 else:
-    st.metric(
-        "Posterior (PPV)",
-        f"{counts.true_positive} out of {counts.total_test_positive}",
-        f"{counts.posterior_ppv * 100:.1f}% actually {domain['condition']}",
-    )
+    col_m, _ = st.columns([1, 3])
+    with col_m:
+        st.metric(
+            "P(Condition | Test⁺)",
+            f"{counts.posterior_ppv * 100:.1f}%",
+            f"{counts.true_positive} of {counts.total_test_positive} who tested positive actually {domain['condition']}",
+        )
 
-with st.expander("Show Bayes' rule calculation + visual mapping", expanded=True):
+with st.expander("Bayes' rule — calculation & visual mapping", expanded=False):
     explanation_col, bayes_panel_col = st.columns([1, 1], gap="large")
 
     with explanation_col:
-        st.markdown(f"**Text form**  \n{bayes_explanation['formula']}")
-        st.markdown(f"**Current-value text substitution**  \n{bayes_explanation['substitution']}")
-        st.markdown("**Quick visual-reading summary**")
+        st.markdown("**Formula (text)**")
+        st.code(bayes_explanation["formula"], language=None)
+        st.markdown("**With current values**")
+        st.code(bayes_explanation["substitution"], language=None)
+        st.markdown("**How to read the visuals**")
         for line in bayes_explanation["mapping"]:
             st.markdown(f"- {line}")
 
     with bayes_panel_col:
-        (bayes_math_tab,) = st.tabs(["Bayes rule mapping/math"])
-        with bayes_math_tab:
-            st.markdown("**Original Bayes' rule**")
-            st.latex(bayes_explanation["latex_original"])
-            st.markdown("**Expanded with total probability**")
-            st.latex(bayes_explanation["latex_expanded"])
-            st.markdown("**Substitute current values**")
-            st.latex(bayes_explanation["latex_substitution"])
-            if framing == "frequency":
-                st.markdown("**Equivalent frequency form**")
-                st.latex(bayes_explanation["latex_frequency_form"])
-            st.markdown("**How each equation part maps to the visuals**")
-            for part in bayes_explanation["term_mapping"]:
-                st.latex(part["term"])
-                st.markdown(f"- {part['meaning']} {part['visual']}")
+        st.markdown("**Original Bayes' rule**")
+        st.latex(bayes_explanation["latex_original"])
+        st.markdown("**Expanded with total probability**")
+        st.latex(bayes_explanation["latex_expanded"])
+        st.markdown("**Substitute current values**")
+        st.latex(bayes_explanation["latex_substitution"])
+        if framing == "frequency":
+            st.markdown("**Equivalent frequency form**")
+            st.latex(bayes_explanation["latex_frequency_form"])
+        st.markdown("**Term mapping to visuals**")
+        for part in bayes_explanation["term_mapping"]:
+            st.latex(part["term"])
+            st.markdown(f"- {part['meaning']} {part['visual']}")

@@ -18,7 +18,6 @@ COLORS = {
 MIN_MARKER_SIZE = 8
 MAX_MARKER_SIZE = 26
 MARKER_SIZE_BASE = 520
-RIGHT_LEGEND_MARGIN = 260
 
 
 def compute_grid(N: int) -> tuple[int, int]:
@@ -119,30 +118,8 @@ def create_icon_array(
     capacity = rows * cols
 
     regions = _region_defs(counts, domain, grouping)
-    color_by_index = []
-    hover_by_index = []
-
-    cursor = 0
-    for region in regions:
-        for _ in range(region["count"]):
-            if cursor >= counts.N:
-                break
-            color_by_index.append(region["color"])
-            value_label = _format_region_value(region["count"], counts.N, framing)
-            hover_by_index.append(
-                f"{region['domain_label']}<br>{region['struct_label']}<br>"
-                f"Value: {value_label}"
-            )
-            cursor += 1
-
-    while len(color_by_index) < counts.N:
-        color_by_index.append(COLORS["neutral"])
-        hover_by_index.append("Unassigned")
-
-    while len(color_by_index) < capacity:
-        color_by_index.append("rgba(0,0,0,0)")
-        hover_by_index.append("Padding")
-
+    
+    # Precompute all grid coordinates
     xs, ys = [], []
     for idx in range(capacity):
         row = idx // cols
@@ -151,37 +128,103 @@ def create_icon_array(
         ys.append(rows - 1 - row)
 
     marker_size = _compute_marker_size(rows, cols)
-
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=xs,
-            y=ys,
-            mode="markers",
-            marker={
-                "symbol": "square",
-                "size": marker_size,
-                "color": color_by_index,
-                "line": {"width": 0},
-            },
-            hovertemplate="%{text}<extra></extra>",
-            text=hover_by_index,
-            showlegend=False,
+
+    cursor = 0
+    for region in regions:
+        count = region["count"]
+        # Clamp count to remaining valid space in N
+        count = min(count, max(0, counts.N - cursor))
+        if count == 0:
+            continue
+            
+        start = cursor
+        end = cursor + count
+        
+        region_xs = xs[start:end]
+        region_ys = ys[start:end]
+        
+        value_label = _format_region_value(count, counts.N, framing)
+        hover_info = [
+            f"{region['domain_label']}<br>{region['struct_label']}<br>Value: {value_label}"
+        ] * count
+
+        fig.add_trace(
+            go.Scatter(
+                x=region_xs,
+                y=region_ys,
+                mode="markers",
+                name=f"{region['struct_label']} ({value_label})",
+                marker={
+                    "symbol": "square",
+                    "size": marker_size,
+                    "color": region["color"],
+                    "line": {"width": 0},
+                },
+                hovertemplate="%{text}<extra></extra>",
+                text=hover_info,
+                showlegend=True,
+            )
         )
-    )
+        cursor += count
+
+    # Handle Neutral/Unassigned points
+    unassigned_count = counts.N - cursor
+    if unassigned_count > 0:
+        start = cursor
+        end = cursor + unassigned_count
+        fig.add_trace(
+            go.Scatter(
+                x=xs[start:end],
+                y=ys[start:end],
+                mode="markers",
+                name="Unassigned",
+                marker={
+                    "symbol": "square",
+                    "size": marker_size,
+                    "color": COLORS["neutral"],
+                    "line": {"width": 0},
+                },
+                hovertemplate="Unassigned<extra></extra>",
+                text=["Unassigned"] * unassigned_count,
+                showlegend=True,
+            )
+        )
+        cursor += unassigned_count
+
+    # Handle invisible padding points
+    padding_count = capacity - cursor
+    if padding_count > 0:
+        start = cursor
+        end = capacity
+        fig.add_trace(
+            go.Scatter(
+                x=xs[start:end],
+                y=ys[start:end],
+                mode="markers",
+                marker={
+                    "symbol": "square",
+                    "size": marker_size,
+                    "color": "rgba(0,0,0,0)",
+                    "line": {"width": 0},
+                },
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
 
     fig.update_layout(
-        margin={"l": 10, "r": RIGHT_LEGEND_MARGIN, "t": 10, "b": 10},
+        margin={"l": 10, "r": 20, "t": 10, "b": 10},
         plot_bgcolor="white",
         paper_bgcolor="white",
-        legend={
-            "orientation": "v",
-            "yanchor": "top",
-            "y": 1.0,
-            "xanchor": "left",
-            "x": 1.02,
-            "font": {"size": 11},
-        },
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
         xaxis={
             "visible": False,
             "range": [-0.6, cols - 0.4],
@@ -191,20 +234,5 @@ def create_icon_array(
         yaxis={"visible": False, "range": [-0.6, rows - 0.4], "fixedrange": True},
         height=max(360, min(760, int(rows * marker_size * 1.35))),
     )
-
-    legend_traces = []
-    for region in regions:
-        legend_traces.append(
-            go.Scatter(
-                x=[None],
-                y=[None],
-                mode="markers",
-                marker={"symbol": "square", "size": 11, "color": region["color"]},
-                name=f"{region['struct_label']}: {region['domain_label']}",
-                hoverinfo="skip",
-                showlegend=True,
-            )
-        )
-    fig.add_traces(legend_traces)
 
     return fig

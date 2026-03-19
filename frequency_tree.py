@@ -6,7 +6,7 @@ from calculations import BayesianParameters, DerivedCounts
 from icon_array import COLORS
 
 POSTERIOR_BRACKET_Y = 0.14
-POSTERIOR_BRACKET_TICK_Y = 0.11
+POSTERIOR_BRACKET_TICK_Y = 0.17
 
 
 def _as_pct(value: float, digits: int = 1) -> str:
@@ -112,7 +112,11 @@ def create_frequency_tree(
         ]
 
     for (x, y), label in branch_labels:
-        fig.add_annotation(x=x, y=y, text=label, showarrow=False, font={"size": 11, "color": "#374151"})
+        fig.add_annotation(
+            x=x, y=y, text=label, showarrow=False, 
+            font={"size": 11, "color": "#374151"},
+            bgcolor="white"
+        )
 
     _add_node(
         fig,
@@ -189,7 +193,7 @@ def create_frequency_tree(
         x0=positions["tp"][0],
         y0=POSTERIOR_BRACKET_Y,
         x1=positions["tp"][0],
-        y1=POSTERIOR_BRACKET_TICK_Y,
+        y1=POSTERIOR_BRACKET_Y + 0.03,
         line={"color": "#111827", "width": 3},
     )
     fig.add_shape(
@@ -197,7 +201,7 @@ def create_frequency_tree(
         x0=positions["fp"][0],
         y0=POSTERIOR_BRACKET_Y,
         x1=positions["fp"][0],
-        y1=POSTERIOR_BRACKET_TICK_Y,
+        y1=POSTERIOR_BRACKET_Y + 0.03,
         line={"color": "#111827", "width": 3},
     )
 
@@ -205,7 +209,7 @@ def create_frequency_tree(
         posterior_text = "PPV is undefined (no positive test results)"
     elif use_probability:
         posterior_text = (
-            f"P(D|T⁺) = {counts.true_positive}/{counts.total_test_positive} "
+            f"P(D|T⁺) = {_as_prob(counts.true_positive/counts.N)} / {_as_prob(counts.total_test_positive/counts.N)} "
             f"≈ {_as_prob(counts.posterior_ppv)}"
         )
     else:
@@ -214,12 +218,20 @@ def create_frequency_tree(
             f"= {_as_pct(counts.posterior_ppv)}"
         )
 
-    combo_text = (
-        f"Test positive: {counts.true_positive} + {counts.false_positive} "
-        f"= {counts.total_test_positive}<br>{posterior_text}"
-    )
+    if use_probability:
+        tp_p = counts.true_positive / counts.N if counts.N else 0.0
+        fp_p = counts.false_positive / counts.N if counts.N else 0.0
+        tot_p = counts.total_test_positive / counts.N if counts.N else 0.0
+        combo_text = (
+            f"P(T⁺) = {_as_prob(tp_p)} + {_as_prob(fp_p)} = {_as_prob(tot_p)}<br>{posterior_text}"
+        )
+    else:
+        combo_text = (
+            f"Test positive: {counts.true_positive} + {counts.false_positive} "
+            f"= {counts.total_test_positive}<br>{posterior_text}"
+        )
     fig.add_annotation(
-        x=0.50,
+        x=(positions["tp"][0] + positions["fp"][0]) / 2,
         y=0.07,
         text=combo_text,
         showarrow=False,
