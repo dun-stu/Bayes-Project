@@ -1,0 +1,67 @@
+SCENARIOS = [
+    {
+        "id": "mammography",
+        "name": "Breast Cancer Screening",
+        "domain": {
+            "population": "women",
+            "condition": "have breast cancer",
+            "condition_neg": "do not have breast cancer",
+            "test": "the mammogram",
+            "test_positive": "get a positive mammogram",
+            "test_negative": "get a negative mammogram",
+        },
+        "defaults": {"N": 1000, "base_rate": 0.01, "sensitivity": 0.90, "fpr": 0.09},
+    },
+    {
+        "id": "covid_rapid",
+        "name": "COVID Rapid Test",
+        "domain": {
+            "population": "people",
+            "condition": "have COVID",
+            "condition_neg": "do not have COVID",
+            "test": "the rapid test",
+            "test_positive": "test positive",
+            "test_negative": "test negative",
+        },
+        "defaults": {"N": 200, "base_rate": 0.05, "sensitivity": 0.85, "fpr": 0.03},
+    },
+    {
+        "id": "spam_filter",
+        "name": "Email Spam Filter",
+        "domain": {
+            "population": "emails",
+            "condition": "are spam",
+            "condition_neg": "are legitimate",
+            "test": "the spam filter",
+            "test_positive": "are flagged as spam",
+            "test_negative": "pass the filter",
+        },
+        "defaults": {"N": 200, "base_rate": 0.20, "sensitivity": 0.95, "fpr": 0.05},
+    },
+    {
+        "id": "drug_test",
+        "name": "Workplace Drug Test",
+        "domain": {
+            "population": "employees",
+            "condition": "use the drug",
+            "condition_neg": "do not use the drug",
+            "test": "the drug test",
+            "test_positive": "test positive",
+            "test_negative": "test negative",
+        },
+        "defaults": {"N": 500, "base_rate": 0.02, "sensitivity": 0.95, "fpr": 0.05},
+    },
+    {
+        "id": "quality_control",
+        "name": "Factory Quality Control",
+        "domain": {
+            "population": "products",
+            "condition": "are defective",
+            "condition_neg": "are non-defective",
+            "test": "the inspection",
+            "test_positive": "are flagged as defective",
+            "test_negative": "pass inspection",
+        },
+        "defaults": {"N": 200, "base_rate": 0.03, "sensitivity": 0.92, "fpr": 0.08},
+    },
+]
